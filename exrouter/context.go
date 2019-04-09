@@ -39,6 +39,22 @@ func (c *Context) Get(key string) interface{} {
 	return nil
 }
 
+// Send sends the appropriate type, a string will be sent as a text, an
+// embed will be sent as an embed, a *MessageSend will be send as it is,
+// and everything else will fallback to Reply()
+func (c *Context) Send(content interface{}) (*discordgo.Message, error) {
+	switch content := content.(type) {
+	case string:
+		return c.Ses.ChannelMessageSend(c.Msg.ChannelID, content)
+	case *discordgo.MessageEmbed:
+		return c.Ses.ChannelMessageSendEmbed(c.Msg.ChannelID, content)
+	case *discordgo.MessageSend:
+		return c.Ses.ChannelMessageSendComplex(c.Msg.ChannelID, content)
+	default:
+		return c.Reply(content)
+	}
+}
+
 // Reply replies to the sender with the given message
 func (c *Context) Reply(args ...interface{}) (*discordgo.Message, error) {
 	return c.Ses.ChannelMessageSend(c.Msg.ChannelID, fmt.Sprint(args...))
